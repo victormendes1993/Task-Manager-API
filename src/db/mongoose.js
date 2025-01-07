@@ -1,14 +1,17 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 async function main() {
-
     try {
-        await mongoose.connect(process.env.MONGODB_URL)
+        await mongoose.connect(process.env.MONGODB_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('Connected to MongoDB');
     } catch (err) {
-        console.log(err.message)
+        console.error('Failed to connect to MongoDB:', err.message);
     }
 }
 
-main()
+main();
 
-export default mongoose
+export default mongoose;
