@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 
-async function main() {
+async function connectToMongoose() {
 
     try {
         await mongoose.connect(process.env.MONGODB_URL)
@@ -12,6 +12,4 @@ async function main() {
     }
 }
 
-main()
-
-export default mongoose
+export default connectToMongoose

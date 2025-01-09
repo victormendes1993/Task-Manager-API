@@ -2,7 +2,7 @@ import request from 'supertest'
 import User from '../src/models/user.js'
 import app from '../src/app.js'
 import sgMail from '@sendgrid/mail';
-import { userOne, userOneId, setupDatabase, closeDatabase } from './fixtures/db.js';
+import { userOne, setupDatabase, closeDatabase } from './fixtures/db.js';
 import closeServer from '../src/index.js';
 
 jest.mock('@sendgrid/mail')
@@ -49,7 +49,7 @@ test('Should login existing user', async () => {
             password: userOne.password
         })
         .expect(200)
-    const user = await User.findById(userOneId)
+    const user = await User.findById(userOne._id)
     expect(response.body.token).toBe(user.tokens[1].token)
 })
 
@@ -83,7 +83,7 @@ test('Should delete account for user', async () => {
         .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
         .send()
         .expect(200)
-    const user = await User.findById(userOneId)
+    const user = await User.findById(userOne._id)
     expect(user).toBeNull()
 })
 
@@ -100,7 +100,7 @@ test('Should upload avatar image', async () => {
         .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
         .attach('avatar', 'tests/fixtures/profile-pic.jpeg')
         .expect(200)
-    const user = await User.findById(userOneId)
+    const user = await User.findById(userOne._id)
     expect(user.avatar).toEqual(expect.any(Buffer))
 })
 
@@ -112,7 +112,7 @@ test('Should update valid user fields', async () => {
             name: 'Jess'
         })
         .expect(200)
-    const user = await User.findById(userOneId)
+    const user = await User.findById(userOne._id)
     expect(user.name).toBe('Jess')
 })
 
@@ -124,6 +124,42 @@ test('Should not update invalid user fields', async () => {
             location: 'Philadelphia'
         })
         .expect(400)
+})
+
+test('Should not signup user with invalid name/email/password', async () => {
+    await request(app)
+        .post('/users')
+        .send({
+            name: 'Victor Mendes',
+            email: 'victor@live',
+            password: '12345678@',
+        }).expect(400)
+})
+
+test('Should not update user if unauthenticated', async () => {
+    await request(app)
+        .patch('/users/me')
+        .send({
+            name: 'Jess'
+        })
+        .expect(401)
+})
+
+test('Should not update user with invalid name/email/password', async () => {
+    await request(app)
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+        .send({
+            email: 'victor@live',
+        })
+        .expect(400)
+})
+
+test('Should not delete user if unauthenticated', async () => {
+    await request(app)
+        .delete('/users/me')
+        .send()
+        .expect(401)
 })
 
 afterAll(async () => {

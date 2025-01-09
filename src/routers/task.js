@@ -1,8 +1,6 @@
 import express from 'express'
 import Task from '../models/task.js'
 import auth from '../middleware/auth.js'
-import path from 'path'
-import { match } from 'assert'
 
 const router = express.Router()
 
@@ -24,6 +22,7 @@ router.post('/tasks', auth, async (req, res) => {
 // GET /tasks?completed=true
 // GET /tasks?limit=10&skip=0
 // GET /tasks?sortBy=createdAt:desc
+
 router.get('/tasks', auth, async (req, res) => {
 
     const match = {}
@@ -82,7 +81,7 @@ router.patch('/tasks/:id', auth, async (req, res) => {
         const task = await Task.findOne({ _id: req.params.id, owner: req.user._id })
 
         if (!task) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         updates.forEach((update) => task[update] = req.body[update])
@@ -100,7 +99,7 @@ router.delete('/tasks/:id', auth, async (req, res) => {
     try {
         const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user._id })
         if (!task) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
         res.send(task)
     } catch (error) {

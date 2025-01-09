@@ -1,8 +1,9 @@
 import express from 'express'
 import userRouter from './routers/user.js'
 import taskRouter from './routers/task.js'
-import jwt from 'jsonwebtoken'
-import mongoose from './db/mongoose.js'
+import connectToMongoose from './db/mongoose.js'
+
+connectToMongoose()
 
 const app = express()
 
