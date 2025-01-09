@@ -3,8 +3,6 @@ import userRouter from './routers/user.js'
 import taskRouter from './routers/task.js'
 import jwt from 'jsonwebtoken'
 import mongoose from './db/mongoose.js'
-import Task from './models/task.js'
-import User from './models/user.js'
 
 const app = express()
 

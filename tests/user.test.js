@@ -1,31 +1,14 @@
 import request from 'supertest'
 import User from '../src/models/user.js'
-import mongoose from 'mongoose'
-import server from '../src/index.js'
-import jwt from 'jsonwebtoken'
 import app from '../src/app.js'
 import sgMail from '@sendgrid/mail';
+import { userOne, userOneId, setupDatabase, closeDatabase } from './fixtures/db.js';
+import closeServer from '../src/index.js';
 
-const userOneId = new mongoose.Types.ObjectId()
-
-const userOne = {
-    _id: userOneId,
-    name: 'Andrew',
-    email: 'andrewmendes@live.com',
-    password: '12345678@',
-    tokens: [{
-        token: jwt.sign({ _id: userOneId }, process.env.JWT_SECRET)
-    }]
-}
-
-jest.mock('@sendgrid/mail', () => ({
-    setApiKey: jest.fn(),
-    send: jest.fn().mockResolvedValue({}), // Mock send to always resolve successfully
-}));
+jest.mock('@sendgrid/mail')
 
 beforeEach(async () => {
-    await User.deleteMany()
-    await new User(userOne).save()
+    await setupDatabase()
 })
 
 test('Should signup a new user', async () => {
@@ -111,8 +94,40 @@ test('Should not delete account for unauthenticated user', async () => {
         .expect(401)
 })
 
+test('Should upload avatar image', async () => {
+    await request(app)
+        .post('/users/me/avatar')
+        .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+        .attach('avatar', 'tests/fixtures/profile-pic.jpeg')
+        .expect(200)
+    const user = await User.findById(userOneId)
+    expect(user.avatar).toEqual(expect.any(Buffer))
+})
+
+test('Should update valid user fields', async () => {
+    await request(app)
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+        .send({
+            name: 'Jess'
+        })
+        .expect(200)
+    const user = await User.findById(userOneId)
+    expect(user.name).toBe('Jess')
+})
+
+test('Should not update invalid user fields', async () => {
+    await request(app)
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+        .send({
+            location: 'Philadelphia'
+        })
+        .expect(400)
+})
+
 afterAll(async () => {
-    await mongoose.disconnect()
-    server.close()
+    await closeDatabase()
+    closeServer()
 })
 

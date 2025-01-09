@@ -73,7 +73,6 @@ router.post('/users/logoutAll', auth, async (req, res) => {
 
 //Update User
 router.patch('/users/me', auth, async (req, res) => {
-    console.log(req)
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'email', 'password', 'age']
     const isValidOperation = updates.every(update => allowedUpdates.includes(update))
